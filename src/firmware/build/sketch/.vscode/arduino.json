@@ -1,8 +1,0 @@
-#line 1 "/Users/isaacrex/Library/Mobile Documents/com~apple~CloudDocs/Projects/The Door/src/the_door_test_teensy32/.vscode/arduino.json"
-{
-    "sketch": "the_door_test_teensy32.ino",
-    "configuration": "usb=serial,speed=72,opt=o1std,keys=en-us",
-    "board": "teensy:avr:teensy31",
-    "port": "/dev/tty.usbmodem37200101",
-    "output": "../build"
-}
