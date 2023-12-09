@@ -1,0 +1,8 @@
+{
+    "cSpell.words": [
+        "ndarray"
+    ],
+    "terminal.integrated.env.osx": {
+        "PYTHONPATH": "${workspaceFolder}/"
+    }
+}

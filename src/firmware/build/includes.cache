@@ -1,0 +1,27 @@
+[
+  {
+    "Sourcefile": null,
+    "Include": "",
+    "Includepath": "/Users/isaacrex/Library/Arduino15/packages/teensy/hardware/avr/1.58.1/cores/teensy3"
+  },
+  {
+    "Sourcefile": "/Users/isaacrex/Library/Mobile Documents/com~apple~CloudDocs/Projects/The Door/src/build/sketch/the_door_test_teensy32.ino.cpp",
+    "Include": "OctoWS2811.h",
+    "Includepath": "/Users/isaacrex/Documents/Arduino/libraries/OctoWS2811"
+  },
+  {
+    "Sourcefile": "/Users/isaacrex/Library/Mobile Documents/com~apple~CloudDocs/Projects/The Door/src/build/sketch/the_door_test_teensy32.ino.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "/Users/isaacrex/Documents/Arduino/libraries/OctoWS2811/OctoWS2811.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "/Users/isaacrex/Documents/Arduino/libraries/OctoWS2811/OctoWS2811_imxrt.cpp",
+    "Include": "",
+    "Includepath": null
+  }
+]

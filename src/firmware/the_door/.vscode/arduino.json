@@ -1,0 +1,7 @@
+{
+    "sketch": "the_door.ino",
+    "configuration": "usb=serial,speed=600,opt=o2std,keys=en-us",
+    "board": "teensy:avr:teensy40",
+    "port": "/dev/tty.usbmodem146400601",
+    "output": "../build"
+}
