@@ -1,6 +1,7 @@
 # Ignore my playground folder[s]
 **/Playground
 **/playground
+**/build
 
 ###################################################################
 # Below is a collection of ignores for vscode and OS related files
