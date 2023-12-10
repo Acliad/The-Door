@@ -1,5 +1,6 @@
 from frames.frameplayer import FramePlayer
 from frames.framers.staticframer import StaticFramer
+from ledmat import LEDMatrix
 
 from pathlib import Path
 
@@ -27,7 +28,8 @@ img_path = data_folder / img
 framer = StaticFramer(img_path, auto_scale=scale_image)
 
 # Create the frame player
-player = FramePlayer(framer, brightness=BRIGHTNESS, gamma=2.2, contrast=1.0)
+led_matrix = LEDMatrix(brightness=BRIGHTNESS, gamma=2.2, contrast=1.0)
+player = FramePlayer(led_matrix, framer)
 
 # Play the frames
 player.play()

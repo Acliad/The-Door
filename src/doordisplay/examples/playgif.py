@@ -1,5 +1,6 @@
 from frames.frameplayer import FramePlayer
 from frames.framers.gifframer import GifFramer
+from ledmat import LEDMatrix
 
 from pathlib import Path
 
@@ -22,7 +23,8 @@ gif_path = data_folder / gif
 framer = GifFramer(gif_path, framerate=15, auto_scale=scale_image, loop_mode=GifFramer.LoopMode.LOOP)
 
 # Create the frame player
-player = FramePlayer(framer, brightness=BRIGHTNESS, gamma=2.0)
+led_matrix = LEDMatrix(brightness=BRIGHTNESS, gamma=2.0)
+player = FramePlayer(led_matrix, framer)
 
 try:
     # Play the frames
