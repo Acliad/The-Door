@@ -7,10 +7,39 @@ from frames import StaticFramer, GifFramer, FramePlayer, AnimRainbow, AnimSnowfl
 
 
 class LEDSimulator(LEDMatrix):
+    """
+    A class representing a simulator for an LED matrix display.
+
+    Attributes:
+        DEFAULT_SCALE (float): The default scale factor for the simulator.
+        DEFAULT_MAX_FPS (int): The default maximum frames per second for the simulator.
+
+    Args:
+        serial_port (str, optional): The serial port to connect to the Teensy. Defaults to None.
+        scale (float, optional): The scale factor for the simulator. Defaults to DEFAULT_SCALE.
+        **kwargs: Additional keyword arguments to be passed to the parent class.
+
+    Methods:
+        __init__(self, serial_port=None, scale=DEFAULT_SCALE, **kwargs): Initializes the LEDSimulator object.
+    """
+
     DEFAULT_SCALE = 4.0
     DEFAULT_MAX_FPS = 60
 
     def __init__(self, serial_port=None, scale=DEFAULT_SCALE, **kwargs):
+        """
+        Initializes the LEDSimulator object.
+
+        Args:
+            serial_port (str, optional): NOTE: Not implemented. The serial port to connect to the Teensy. Defaults to 
+            None. 
+            scale (float, optional): The scale factor for the simulator. Defaults to DEFAULT_SCALE.
+            **kwargs: Additional keyword arguments to be passed to the parent class:
+
+                gamma (float, optional): The gamma value to use for the LED matrix. Defaults to 1.0.
+                brightness (float, optional): The brightness scale to use for the LED matrix. Defaults to 1.0.
+                contrast (float, optional): The contrast scale to use for the LED matrix. Defaults to 1.0.
+        """
         # Check if gamma and brightness were passed in as keyword arguments and if not, set them to their default values
         gamma = kwargs.pop("gamma", 1.0)
         brightness = kwargs.pop("brightness", 1.0)
@@ -32,10 +61,32 @@ class LEDSimulator(LEDMatrix):
 
         
 class LEDSerialPortSimulator:
+    """
+    Simulates a serial port for LED display communication.
+
+    Args:
+        led_simulator (LEDSimulator): The LED simulator object.
+
+    Attributes:
+        led_simulator (LEDSimulator): The LED simulator object.
+
+    Methods:
+        write(pixel_data): Writes pixel data to the LED simulator.
+    """
+
     def __init__(self, led_simulator: LEDSimulator) -> None:
         self.led_simulator = led_simulator
 
     def write(self, pixel_data) -> None:
+        """
+        Writes pixel data to the LED simulator.
+
+        Args:
+            pixel_data: The pixel data to be written.
+
+        Returns:
+            None
+        """
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
