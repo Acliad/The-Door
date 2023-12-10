@@ -3,7 +3,7 @@ import pygame
 from ledmat import LEDMatrix
 import numpy as np
 from time import sleep, time
-from frames import StaticFramer, GifFramer, FramePlayer, AnimRainbow, AnimSnowflake
+from frames import StaticFramer, GifFramer, FramePlayer, AnimRainbow, AnimSnowflake, Framer
 
 
 class LEDSimulator(LEDMatrix):
@@ -47,7 +47,9 @@ class LEDSerialPortSimulator:
         self.led_simulator.screen.fill((0, 0, 0))  # Clear the screen
 
         # Convert the given pixel data to a matrix of pixel data for the pygame window
-        self.led_simulator.frame[self.led_simulator.idx_map[:, 1], self.led_simulator.idx_map[:, 0], self.led_simulator.idx_map[:, 2]] = pixel_data
+        self.led_simulator.frame[self.led_simulator.idx_map[:, 1], 
+                                 self.led_simulator.idx_map[:, 0], 
+                                 self.led_simulator.idx_map[:, 2]] = pixel_data
 
         # Create a surface from the frame and scale it to the size of the window
         surface = pygame.surfarray.make_surface(self.led_simulator.frame)
@@ -59,20 +61,25 @@ class LEDSerialPortSimulator:
 
         self.led_simulator.clock.tick()  # Limit the frame rate to match the Teensy's max frame rate
 
+def sim_frame(frame: Framer, scale=6, brightness=1.0, gamma=1.0, contrast=1.0):
+    """
+    Simple debug helper that simulates a frame by displaying it in a pygame window. This function is blocking. 
+
+    Args:
+        frame (Framer): The frame to be simulated.
+    """
+    # Initialize the LEDMatrix
+    led_matrix = LEDSimulator(scale=scale, brightness=brightness, gamma=gamma, contrast=contrast)
+    player = FramePlayer(led_matrix, frame)
+
+    try:
+        player.play_blocking()
+    except KeyboardInterrupt:
+        print("Exiting...")
+        pygame.quit()
+
 if __name__ == "__main__":
     # Usage example
-    upscale_factor = 6
-
-    pixel_data = np.zeros((LEDMatrix.WIDTH*LEDMatrix.HEIGHT*3 - 3*28), dtype=np.uint8)
-    pixel_data[0:LEDMatrix.HEIGHT*3:3] = 255
-    pixel_data[1:LEDMatrix.HEIGHT*3+1:3] = 255
-    pixel_data[LEDMatrix.HEIGHT*3:LEDMatrix.HEIGHT*3*2:3] = 255
-    pixel_data[LEDMatrix.HEIGHT*3*2:LEDMatrix.HEIGHT*3*3:3] = 255
-    pixel_data[LEDMatrix.HEIGHT*3*3:LEDMatrix.HEIGHT*3*4:3] = 255
-    pixel_data[LEDMatrix.HEIGHT*3*4:LEDMatrix.HEIGHT*3*5:3] = 255
-
-    matrix = np.zeros((LEDMatrix.HEIGHT, LEDMatrix.WIDTH, 3), dtype=np.uint8)
-    matrix[:, :, 0] = 255
 
     img_path = r"/Users/isaacrex/Library/Mobile Documents/com~apple~CloudDocs/Projects/The Door/src/doordisplay/examples/data/Cats.png"
     img_framer = StaticFramer(img_path)
@@ -83,11 +90,4 @@ if __name__ == "__main__":
     rainbow_framer = AnimRainbow()
     snow_framer = AnimSnowflake()
 
-    display = LEDSimulator(scale=upscale_factor, brightness=1.0, gamma=1.0, contrast=1.0)
-    player = FramePlayer(display, gif_framer)
-
-    try:
-        player.play_blocking()
-    except KeyboardInterrupt:
-        print("Exiting...")
-        pygame.quit()
+    sim_frame(snow_framer)
