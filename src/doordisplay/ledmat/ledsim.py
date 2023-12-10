@@ -77,7 +77,7 @@ class LEDSerialPortSimulator:
     def __init__(self, led_simulator: LEDSimulator) -> None:
         self.led_simulator = led_simulator
 
-    def write(self, pixel_data) -> None:
+    def write(self, pixel_data) -> int:
         """
         Writes pixel data to the LED simulator.
 
@@ -93,7 +93,8 @@ class LEDSerialPortSimulator:
                 exit()
             
         if len(pixel_data) == 1 and pixel_data == self.led_simulator.SOF_FLAG:
-            return
+            # write() normally returns the number of bytes written, which would be one in this case.
+            return 1
 
         self.led_simulator.screen.fill((0, 0, 0))  # Clear the screen
 
@@ -111,6 +112,10 @@ class LEDSerialPortSimulator:
         pygame.display.flip()
 
         self.led_simulator.clock.tick()  # Limit the frame rate to match the Teensy's max frame rate
+
+        return len(pixel_data)
+
+
 
 def sim_frame(frame: Framer, scale=6, brightness=1.0, gamma=1.0, contrast=1.0):
     """
