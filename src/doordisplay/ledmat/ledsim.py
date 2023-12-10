@@ -39,7 +39,7 @@ class LEDSerialPortSimulator:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-                return
+                exit()
             
         if len(pixel_data) == 1 and pixel_data == self.led_simulator.SOF_FLAG:
             return
