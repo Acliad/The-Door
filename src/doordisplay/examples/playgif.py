@@ -12,8 +12,8 @@ scale_image = True
 # gif = "color.gif"
 # gif = "garmindoor_sized.gif"
 # gif = "clickyscream.gif"
-# gif = "clickyfloat.gif"
-gif = "coffee.gif"
+gif = "clickyfloat.gif"
+# gif = "coffee.gif"
 
 # Get the path to the data/ folder
 data_folder = Path(__file__).parent / "data"
@@ -28,7 +28,7 @@ player = FramePlayer(led_matrix, framer)
 
 try:
     # Play the frames
-    player.play()
+    player.play_blocking()
 except KeyboardInterrupt:
     player.stop()
     print("Keyboard interrupt")

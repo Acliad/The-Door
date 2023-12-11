@@ -176,4 +176,4 @@ if __name__ == "__main__":
     rainbow_framer = AnimRainbow()
     snow_framer = AnimSnowflake()
 
-    sim_frame(img_framer)
+    sim_frame(snow_framer)
