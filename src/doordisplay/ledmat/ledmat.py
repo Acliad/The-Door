@@ -94,20 +94,9 @@ class LEDMatrix:
         # Apply the color correction
         self.pixel_data[:] = pixels
         pixel_data_corrected = self._apply_color_correction(self.pixel_data)
-        # The second to last bank of LEDs has columns that are shorter due to the door handle cutout. These pixels
-        # are abstracted away from the user and are not included in the matrix, but the teensy still needs to shift
-        # out this data. We need to pad the pixels with dummy data to fill in the missing pixels. The layout means 
-        # 16 pixels are lost. The dummy pixels should be added to the end of the second to last bank (12)
-        dummy_start_idx = LEDMatrix.COLUMNS_PER_BANK*LEDMatrix.HEIGHT*3*(LEDMatrix.NUM_BANKS-1)-16*3
-        dummy_end_idx = dummy_start_idx + 16*3
-        
-        fixed_pixels = np.zeros((len(pixel_data_corrected) + 16*3), dtype=np.uint8)
-        fixed_pixels[:dummy_start_idx] = pixel_data_corrected[:dummy_start_idx]
-        fixed_pixels[dummy_start_idx:dummy_end_idx] = 0
-        fixed_pixels[dummy_end_idx:] = pixel_data_corrected[dummy_start_idx:]
 
         self.serial_port.write(LEDMatrix.SOF_FLAG)
-        self.serial_port.write(fixed_pixels)
+        self.serial_port.write(pixel_data_corrected)
 
 
 

@@ -12,7 +12,7 @@
             ],
             "intelliSenseMode": "gcc-x64",
             "includePath": [
-                "/Users/isaacrex/Library/Mobile Documents/com~apple~CloudDocs/Projects/The Door/src/build/pch",
+                "/Users/isaacrex/Library/Mobile Documents/com~apple~CloudDocs/Projects/The Door/src/firmware/build/pch",
                 "/Users/isaacrex/Library/Arduino15/packages/teensy/hardware/avr/1.58.1/cores/teensy4",
                 "/Users/isaacrex/Library/Arduino15/packages/teensy/hardware/avr/1.58.1/libraries/OctoWS2811",
                 "/Users/isaacrex/Library/Arduino15/packages/teensy/tools/teensy-compile/11.3.1/arm/arm-none-eabi/include/c++/11.3.1",
@@ -23,7 +23,7 @@
                 "/Users/isaacrex/Library/Arduino15/packages/teensy/tools/teensy-compile/11.3.1/arm/arm-none-eabi/include"
             ],
             "forcedInclude": [
-                "/Users/isaacrex/Library/Mobile Documents/com~apple~CloudDocs/Projects/The Door/src/build/pch/Arduino.h"
+                "/Users/isaacrex/Library/Mobile Documents/com~apple~CloudDocs/Projects/The Door/src/firmware/build/pch/Arduino.h"
             ],
             "cStandard": "c11",
             "cppStandard": "c++14",

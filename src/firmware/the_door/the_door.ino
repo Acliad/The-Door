@@ -42,14 +42,15 @@ void loop() {
   // Wait for SOF_FLAG
   int start_char = Serial.read();
   if (start_char == SOF_FLAG) {
-    // Serial.println("SOF Received"); A frame has started, so we expect to receive 3*numLEDs bytes total, but we need
+    // Serial.println("SOF Received"); 
+    // A frame has started, so we expect to receive 3*numLEDs bytes total, but we need
     // to insert our dummy pixels.
-    int num_bytes = Serial.readBytes((char *)drawingMemory, dummy_start_index+1);
+    int num_bytes = Serial.readBytes((char *)drawingMemory, dummy_start_index);
     // If readBytes timed out, restart the loop.
     if (num_bytes < 0) {
       return;
     }
-    num_bytes += Serial.readBytes((char *)drawingMemory+dummy_end_index, real_num_leds*3-dummy_end_index);
+    num_bytes += Serial.readBytes((char *)drawingMemory+dummy_end_index, real_num_leds*3-dummy_start_index);
     // Serial.print("Num bytes received: ");
     // Serial.println(num_bytes);
     // Check if we received the correct number of bytes. If not, wait for another SOF and try again.
