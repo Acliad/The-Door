@@ -4,5 +4,5 @@
     ],
     "terminal.integrated.env.osx": {
         "PYTHONPATH": "${workspaceFolder}/"
-    }
+    },
 }

@@ -30,7 +30,7 @@ class LEDMatrix:
 
     def __init__(self, serial_port: serial.Serial=None, brightness: float=0.25, contrast:float = 1.0, gamma: float=2.4):
         self.idx_map = LEDMatrix.generate_idx_map()
-        self.serial_port = serial_port or LEDMatrix.get_teensy_serial()
+        self.serial_port = serial_port if serial_port is not None else LEDMatrix.get_teensy_serial()
         self._brightness = brightness
         self._contrast = contrast
         self._gamma = gamma
@@ -74,16 +74,16 @@ class LEDMatrix:
         
         return idx_map
 
-    def map_matrix(self, matrix: np.ndarray) -> list:
+    def map_matrix(self, matrix: np.ndarray) -> np.ndarray:
         """Apply the index map to the matrix and return the 1D array of pixel data.
 
         Args:
             matrix (np.ndarray): array of shape (WIDTH, HEIGHT, 3) where the 3rd dimension is the RGB channels.
 
         Returns:
-            list: list of pixel data to be sent to the LED strip.
+            np.ndarray: 1D array of pixel data to be sent to the LED strip.
         """
-        return matrix[self.idx_map[:, 0], self.idx_map[:, 1], self.idx_map[:, 2]].tolist()
+        return matrix[self.idx_map[:, 0], self.idx_map[:, 1], self.idx_map[:, 2]]
     
     def send_pixels(self, pixels: list | np.ndarray):
         """Send the pixel data to the teensy.

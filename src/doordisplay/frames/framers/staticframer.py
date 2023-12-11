@@ -10,6 +10,7 @@ class StaticFramer(Framer):
         super().__init__(0)
         self.auto_scale = auto_scale
         self.image_path = image_path
+        self.current_frame = None
         self._load_image()
 
     def update(self):

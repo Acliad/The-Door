@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from numpy import ndarray
-from ledmat.ledmat import LEDMatrix
+from ledmat import LEDMatrix
 
 class Framer(ABC):
     """

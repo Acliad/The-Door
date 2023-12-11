@@ -1,14 +1,16 @@
 from frames.framers.animrainbow import AnimRainbow
 from frames.frameplayer import FramePlayer
+from ledmat import LEDMatrix
 from time import sleep
 import signal
 
 BRIGHTNESS = 0.40
 
+led_matrix = LEDMatrix(brightness=BRIGHTNESS, gamma=2.2, contrast=1.0)
 rainbow = AnimRainbow()
 rainbow.speed = 1
 rainbow.frequency = 1
-player = FramePlayer(rainbow, brightness=BRIGHTNESS, gamma=2.2, contrast=1.0)
+player = FramePlayer(led_matrix, rainbow)
 
 
 def handle_keyboard_interrupt(signal, frame):
