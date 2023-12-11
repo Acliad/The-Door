@@ -53,11 +53,43 @@ class LEDSimulator(LEDMatrix):
         self.scale = scale
         self.width = LEDMatrix.WIDTH * self.scale
         self.height = LEDMatrix.HEIGHT * self.scale
-        print(f"Window size: {self.width}x{self.height}")
-        self.screen = pygame.display.set_mode((self.width, self.height))
+        self.screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
+        self.window_title = "The Door Simulator - FPS: {:.2f}"
+        pygame.display.set_caption(self.window_title.format(0))
         self.clock = pygame.time.Clock()
         
         self.frame = np.zeros((LEDMatrix.WIDTH, LEDMatrix.HEIGHT, 3), dtype=np.uint8)
+
+    def update(self):
+        """
+        Update the LED matrix display.
+
+        This method handles the updating of the pygame window and the frame rate limitation.
+        It also handles events such as quitting the program and resizing the window. It should be called in a main loop.
+
+        Parameters:
+            None
+
+        Returns:
+            None
+        """
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            elif event.type == pygame.VIDEORESIZE:
+                new_height = event.h
+                new_width = int(new_height / LEDMatrix.HEIGHT * LEDMatrix.WIDTH)
+
+                self.width = new_width
+                self.height = new_height
+                self.scale = new_width / LEDMatrix.WIDTH
+                self.screen = pygame.display.set_mode((new_width, new_height), pygame.RESIZABLE)
+
+        self.clock.tick(self.DEFAULT_MAX_FPS)
+
+    def __del__(self):
+        pygame.quit()
 
         
 class LEDSerialPortSimulator:
@@ -87,11 +119,6 @@ class LEDSerialPortSimulator:
         Returns:
             None
         """
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                exit()
-            
         if len(pixel_data) == 1 and pixel_data == self.led_simulator.SOF_FLAG:
             # write() normally returns the number of bytes written, which would be one in this case.
             return 1
@@ -111,7 +138,8 @@ class LEDSerialPortSimulator:
         self.led_simulator.screen.blit(surface, (0, 0))
         pygame.display.flip()
 
-        self.led_simulator.clock.tick()  # Limit the frame rate to match the Teensy's max frame rate
+        # Add an FPS counter to the window title
+        pygame.display.set_caption(self.led_simulator.window_title.format(self.led_simulator.clock.get_fps()))
 
         return len(pixel_data)
 
@@ -128,11 +156,13 @@ def sim_frame(frame: Framer, scale=6, brightness=1.0, gamma=1.0, contrast=1.0):
     led_matrix = LEDSimulator(scale=scale, brightness=brightness, gamma=gamma, contrast=contrast)
     player = FramePlayer(led_matrix, frame)
 
+    player.play()
     try:
-        player.play_blocking()
+        while True:
+            player.update()
+            led_matrix.update()
     except KeyboardInterrupt:
         print("Exiting...")
-        pygame.quit()
 
 if __name__ == "__main__":
     # Usage example
@@ -146,4 +176,4 @@ if __name__ == "__main__":
     rainbow_framer = AnimRainbow()
     snow_framer = AnimSnowflake()
 
-    sim_frame(snow_framer)
+    sim_frame(img_framer)
