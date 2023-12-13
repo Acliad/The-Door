@@ -33,7 +33,7 @@ OctoWS2811 leds(ledsPerStrip, displayMemory, drawingMemory, config, numBanks, pi
 void setup() {
   Serial.begin(115200);
   // TODO: Adjust the timeout to be on the order of ~2 frames. 
-  Serial.setTimeout(10);
+  Serial.setTimeout(30);
   leds.begin();
   leds.show();
 }
