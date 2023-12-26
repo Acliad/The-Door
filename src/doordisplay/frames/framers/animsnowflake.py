@@ -30,15 +30,12 @@ class Snowflake:
     Methods:
         make_snowflake_matrix: Generates the matrix representation of the snowflake.
     """
-    def __init__(self, size, x:float, y:float, speed:float, color=(255, 255, 255), seed=None):
+    def __init__(self, size, x:float, y:float, speed:float, color=(255, 255, 255)):
         self.x = x
         self.y = y
         self.speed = speed
         self.color = color
         self.size = size
-
-        if seed is not None:
-            random.seed(seed)
             
         self.matrix: np.ndarray = self.make_snowflake_matrix()
 
