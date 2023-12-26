@@ -4,21 +4,50 @@ import numpy as np
 import random
 import bisect
 import time
+import colorsys
 
 class Snowflake:
-    def __init__(self, size, x:float, y:float, speed:float, color=(255, 255, 255)):
+    """
+    Returns a randomly generated snowflake of the specified size. These rules apply to the generation of the snowflake:
+
+    1. The snowflake must be symmetric about the center x-axis and y-axis. TODO: Make this have odd symmetry only?
+    2. The snowflake must have at least one pixel at the extents of size. I.e. if size=5, then the snowflake must have
+       at least one pixel at (0, 0), (0, 1), (0, 2), (1, 0), (2, 0) and follow rule 1. This prevents the snowflake from
+       being smaller than the specified size.
+    3. One edge of the snowflake cannot be fully filled. I.e., if the snowflake is size=5, then the snowflake cannot
+       cannot have all pixels filled at (0, 0), (0, 1), (0, 2) OR all pixels filled at (0, 0), (1, 0), (2, 0). This
+       prevents square shapes, T-shapes, and H-shapes from being generated.
+    4. Corner of a snowflake cannot be next to two filled pixel on the edge of the snowflake. This prevents the
+       snowflake from appearing square. TODO: Maybe this only applies if snowflake is fully symmetric, not odd
+       symmetric?
+    
+
+    Attributes:
+        size (int): The size of the snowflake. x (float): The x-coordinate of the snowflake's position. y (float): The
+        y-coordinate of the snowflake's position. speed (float): The speed of the snowflake. color (tuple): The color of
+        the snowflake in RGB format. matrix (ndarray): The matrix representation of the snowflake.
+
+    Methods:
+        make_snowflake_matrix: Generates the matrix representation of the snowflake.
+    """
+    def __init__(self, size, x:float, y:float, speed:float, color=(255, 255, 255), seed=None):
         self.x = x
         self.y = y
         self.speed = speed
         self.color = color
         self.size = size
+
+        if seed is not None:
+            random.seed(seed)
+            
         self.matrix: np.ndarray = self.make_snowflake_matrix()
 
     def make_snowflake_matrix(self) -> np.ndarray:
         flake = np.zeros((self.size, self.size, 3), dtype=np.uint8)
 
-        # Center pixel
-        flake[self.size // 2][self.size // 2] = self.color
+        # Center pixel if odd size
+        if self.size % 2 == 1:
+            flake[self.size // 2][self.size // 2] = self.color
 
         # Randomize other pixels around the center with symmetry
         num_pixels = 0
@@ -37,27 +66,30 @@ class Snowflake:
 
 class AnimSnowflake(Framer):
     DEFAULT_FRAMERATE = 60
-    RENDER_WIDTH = Framer.WIDTH * 1
-    RENDER_HEIGHT = Framer.HEIGHT * 1
 
-    def __init__(self):
+    def __init__(self, speed=1.0, trail_factor=0):
         """
         Initializes a new instance of the AnimSnowflake class.
         """
         super().__init__(AnimSnowflake.DEFAULT_FRAMERATE)
-        self.snowflakes = []
-        self.matrix = np.zeros((self.HEIGHT, self.WIDTH, 3), dtype=np.uint8)
+        self.snowflakes:list[Snowflake] = []
+        self.speed = speed
+        self.upscale_factor = 1
+        self.render_width = self.WIDTH * self.upscale_factor
+        self.render_height = self.HEIGHT * self.upscale_factor
+        self.matrix = np.zeros((self.render_height, self.render_width, 3), dtype=np.uint8)
+        self.trail_factor = trail_factor
 
     def update(self):
         """
         Updates the snowflake matrix by randomly generating new snowflakes and shifting existing snowflakes down by 
         their speed.
         """
-        self.matrix = np.zeros((self.HEIGHT, self.WIDTH, 3), dtype=np.uint8)
+        self.matrix = (self.matrix * self.trail_factor).astype(np.uint8)
 
 
         # Add a new snowflake with a 30% chance
-        if random.randint(0, 100) > 70:
+        if random.randint(0, 100) > 50:
             self.add_snowflake()
 
         # start_time = time.time()
@@ -74,10 +106,10 @@ class AnimSnowflake(Framer):
         #     print(f"Total draw time: {time_all_snowflakes:.2f} ms")
             
         # Remove snowflakes that have fallen off the bottom of the matrix
-        self.snowflakes = [snowflake for snowflake in self.snowflakes if snowflake.y < self.RENDER_HEIGHT]
+        self.snowflakes = [snowflake for snowflake in self.snowflakes if snowflake.y < self.render_height]
         snowflake_img = Image.fromarray(self.matrix)
-        return self.matrix
-        # return np.array(snowflake_img.resize((self.WIDTH, self.HEIGHT), Image.LANCZOS))
+        # return self.matrix
+        return np.array(snowflake_img.resize((self.WIDTH, self.HEIGHT), Image.LANCZOS))
 
     def draw_snowflake(self, snowflake: Snowflake):
         # TODO: The below is kind of gross, maybe this should be rethought for clarity. Part of the reason for doing
@@ -96,8 +128,8 @@ class AnimSnowflake(Framer):
         # arrays of shape (num_valid_pixels*3,) where the values are True if the row or column is in bounds and False
         # otherwise. The last line combines the two boolean arrays to index pixel_matrix_indices and select only the
         # indices where the row and column are within the bounds of the matrix.
-        in_bound_rows = (frame_matrix_indices[0] >= 0) & (frame_matrix_indices[0] < self.RENDER_HEIGHT)
-        in_bound_cols = (frame_matrix_indices[1] >= 0) & (frame_matrix_indices[1] < self.RENDER_WIDTH)
+        in_bound_rows = (frame_matrix_indices[0] >= 0) & (frame_matrix_indices[0] < self.render_height)
+        in_bound_cols = (frame_matrix_indices[1] >= 0) & (frame_matrix_indices[1] < self.render_width)
         frame_matrix_indices = frame_matrix_indices[:, in_bound_rows & in_bound_cols]
 
         # We now back out the indices of the snowflake matrix that we want to use by subtracting the snowflake
@@ -127,13 +159,14 @@ class AnimSnowflake(Framer):
 
     def add_snowflake(self):
         size_idx = random.randint(0, 2)
-        sizes = [1, 3, 5]
-        speeds = [random.random()*0.2+0.3, random.random()*0.2+0.45, random.random()*0.2+0.6]
+        sizes = np.array([1, 3, 5])*self.upscale_factor
+        speeds = np.array([random.random()*0.2+0.3, random.random()*0.2+0.45, random.random()*0.2+0.6])*self.speed*self.upscale_factor
         brightes_scalers = [0.7, 0.85, 1.0]
         size = sizes[size_idx]
-        x = random.randint(0, self.RENDER_WIDTH)
+        x = random.randint(0, self.render_width)
         y = -size
-        flake_color = np.array((random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
+        max_rand = 127
+        flake_color = np.array((random.randint(0, max_rand), random.randint(0, max_rand), random.randint(0, max_rand))) + random.randint(0, 255-max_rand)
         # flake_color = np.array((255, 255, 255))
         # Make smaller snowflakes slightly smaller than larger snowflakes
         flake_color = np.round(flake_color * brightes_scalers[size_idx])
