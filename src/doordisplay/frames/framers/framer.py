@@ -41,3 +41,45 @@ class Framer(ABC):
         This method should be implemented by subclasses to reset the frame to its initial state.
         """
         pass
+
+    @property
+    def framerate(self) -> int:
+        """
+        Gets the frame rate of the frame player.
+
+        Returns:
+            int: The frame rate of the frame player.
+        """
+        return self._framerate
+    
+    @framerate.setter
+    def framerate(self, framerate: int):
+        """
+        Sets the frame rate of the frame player.
+
+        Args:
+            framerate (int): The frame rate of the frame player.
+        """
+        self._framerate = framerate
+        self._dt = 1 / framerate
+
+    @property
+    def dt(self) -> float:
+        """
+        Gets the time between frames.
+
+        Returns:
+            float: The time between frames.
+        """
+        return self._dt
+    
+    @dt.setter
+    def dt(self, dt: float):
+        """
+        Sets the time between frames.
+
+        Args:
+            dt (float): The time between frames.
+        """
+        self._dt = dt
+        self._framerate = 1 / dt

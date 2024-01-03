@@ -9,9 +9,7 @@ BRIGHTNESS = 0.8
 TRAIL_FACTOR = 0
 SPEED = 1.0
 
-
-snow = AnimSnowflake(speed=SPEED, trail_factor=TRAIL_FACTOR)
-
+snow = AnimSnowflake(fall_speed=SPEED, trail_factor=TRAIL_FACTOR, wind_start_pos=10)
 
 if SIMULATE:
     # Simulated door
