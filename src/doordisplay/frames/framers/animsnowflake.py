@@ -1,3 +1,22 @@
+"""
+Animation of a snowfall. Current features:
+    - Snowflakes are randomly generated. The generation rate can be adjusted.
+    - Snowflakes fall at a constant speed. The fall speed can be adjusted.
+    - Wind blows the snowflakes horizontally. The wind speed follows opensimplex (Perlin) noise.
+    - Storm intensity amplifies the wind speed and generation rate. The storm intensity follows opensimplex (Perlin)
+      noise.
+    - There are multiple sizes of snowflakes (default 3). The sizes are drawn and affected by speed such that larger
+      snowflakes appear to be "closer" than smaller snowflakes.
+    - Snowflakes can drawn with a trail factor that fades out the snowflakes as they fall.
+    - Snowflakes can be drawn with interpolation to make the snowflakes move smoother.
+
+TODO:
+    - Improve snowflake generation to make them more realistic and faster to generate
+    - Add more accumulation modes (constant, blow away, etc.)
+    - Add a fancy accumulation wipe animation
+    - Add random wind gusts
+"""
+
 from frames.framers.framer import Framer
 from PIL import Image
 import numpy as np
@@ -326,9 +345,9 @@ class Accumulator:
 
     
 class AnimSnowflake(Framer):
-    DEFAULT_FRAMERATE = 60
-    MAX_WIND_INTENSITY = 10
-    MIN_FALL_SPEED = 0.05
+    DEFAULT_FRAMERATE:float  = 60.0
+    MAX_WIND_INTENSITY:float = 10.0
+    MIN_FALL_SPEED:float     = 0.05
 
     def __init__(self, 
                  gen_rate:float = 1000, 
@@ -348,9 +367,36 @@ class AnimSnowflake(Framer):
                  snowflake_brightness_scalers: list[float, float, float] = [0.7, 0.8, 1.0],
                  snowflake_color: str | Callable[[int], Sequence[int]] = 'random',
                  speed_randomness: float = 0.2,
-                ):
+                ) -> None:
         """
         Initializes a new instance of the AnimSnowflake class.
+
+        Args:
+            gen_rate (float, optional): The generation rate of snowflakes in milliseconds. Defaults to 1000.
+            interpolate (bool, optional): Whether to interpolate the position of snowflakes. Defaults to False.
+            trail_factor (float, optional): The trail factor for fading out snowflakes. Defaults to 0.0.
+            fall_speed (float, optional): The fall speed of snowflakes. Defaults to 1.0.
+            wind_speed (float, optional): The initial wind speed. Defaults to 0.0.
+            wind_step (float, optional): The increment used for opensimplex noise for wind speed. Defaults to 0.00005.
+            wind_start_pos (float, optional): The starting position of the wind speed in opensimplex noise space. 
+                Defaults to 0.0.
+            wind_intensity (float, optional): The intensity of the wind. Defaults to 3.0.
+            wind_seed (int | None, optional): The seed for the opensimplex noise generator for wind speed. If None, a 
+                random seed will be used. Defaults to None.
+            storm_factor (float, optional): The factor to amplify the storm intensity. Defaults to 2.0.
+            storm_step (float, optional): The increment used for opensimplex noise for storm intensity. Defaults to 
+                0.00002.
+            storm_start_pos (float, optional): The starting position of the storm intensity in opensimplex noise space. 
+                Defaults to 0.0.
+            snowflake_sizes (list[int, int, int], optional): The sizes of the snowflakes. Defaults to [1, 3, 5].
+            snowflake_speed_scalers (list[float, float, float], optional): The speed scalers for the snowflakes. 
+                Defaults to [0.3, 0.45, 0.6].
+            snowflake_brightness_scalers (list[float, float, float], optional): The brightness scalers for the 
+                snowflakes. Defaults to [0.7, 0.8, 1.0].
+            snowflake_color (str | Callable[[int], Sequence[int]], optional): The color of the snowflakes. Can be 
+                'random', 'white', or a callable function that takes the size of the snowflake as input and returns a 
+                sequence of RGB values. Defaults to 'random'.
+            speed_randomness (float, optional): The randomness factor for the snowflake speed. Defaults to 0.2.
         """
         super().__init__(AnimSnowflake.DEFAULT_FRAMERATE)
         self.matrix = np.zeros((self.HEIGHT, self.WIDTH, 3), dtype=np.uint8)
@@ -393,10 +439,13 @@ class AnimSnowflake(Framer):
         self.max_accumulate_time = 0
         self.avg_accumulate_time = 0
 
-    def update(self):
+    def update(self) -> np.ndarray:
         """
         Updates the snowflake matrix by randomly generating new snowflakes and shifting existing snowflakes down by 
         their speed.
+
+        Returns:
+            np.ndarray: The updated snowflake matrix.
         """
         self.matrix = (self.matrix * self.trail_factor).astype(np.uint8)
 
@@ -472,8 +521,6 @@ class AnimSnowflake(Framer):
 
         Args:
             snowflake (Snowflake): The snowflake to check.
-            x (float): The x-coordinate of the snowflake's position.
-            y (float): The y-coordinate of the snowflake's position.
 
         Returns:
             bool: True if the snowflake is in bounds of the matrix, False otherwise.
@@ -484,6 +531,13 @@ class AnimSnowflake(Framer):
         return y + size > 0 and y < self.HEIGHT-self.accumulator.layers and x + size > 0 and x < self.WIDTH
     
     def add_snowflake(self, x:float, y:float):
+        """
+        Adds a snowflake to the animation.
+
+        Args:
+            x (float): The x-coordinate (column) of the snowflake's position.
+            y (float): The y-coordinate (row) of the snowflake's position.
+        """
         depth_idx = random.randint(0, len(self.snowflake_sizes)-1)
         speed_y = self.snowflake_speed_scalers[depth_idx]*self.fall_speed + \
                     random.normalvariate(sigma=0.2)*self.speed_randomness
@@ -496,6 +550,7 @@ class AnimSnowflake(Framer):
         #   - If the snowflake is on the top edge of the matrix, shift it up by its size and left by its size//2
         #   - If the snowflake is on the left edge of the matrix, shift it left by its size
         #   - If the snowflake is on the right edge of the matrix, shift it right by 1 so it's just off the edge
+        # TODO: Should this be done in update() instead?
         if y == 0:
             y -= size
             x -= size // 2
@@ -522,7 +577,7 @@ class AnimSnowflake(Framer):
                       key=lambda s: s.size
                      )
 
-    def reset(self):
+    def reset(self) -> None:
         """
         Resets the state of the snowflake animation.
         """
