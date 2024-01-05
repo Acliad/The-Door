@@ -7,6 +7,7 @@ import time
 import colorsys
 from frames.utils import place_in
 from typing import Callable, Sequence
+from dataclasses import dataclass
 import opensimplex # NOTE: Installing numba will increase performance of noise generation
 
 
@@ -66,6 +67,264 @@ class Snowflake:
 
         return flake
     
+class Accumulator:
+    """
+    Accumulates snowflakes that have fallen to the bottom of the matrix.
+
+    When a snowflake falls to the top of the pile, one of the following happens:
+        - If the column struck is empty, then a bin is created the width of the snowflake
+        - If the column struck is a partially full bin, then the snowflake is added to the bin
+        - If the column struck is a full bin, then the snowflake is added to the next closest bin or the bin is expanded
+          if the closest would-be bin is empty
+
+    Attributes:
+        matrix (ndarray): The matrix representation of the accumulated snowflakes. Generally this should be the same
+            size as the matrix that the snowflakes are falling into.
+        bins (list[Accumulator.Bin | None]): The list of bins that accumulate the fallen snowflakes.
+        layers (int): The current number of layers.
+        bin_level_scaler (int): The scaler used to determine the full level of a bin.
+
+    Methods:
+        __init__(self, height:int = Framer.HEIGHT, width:int = Framer.WIDTH, bin_level_scaler:int = 10) -> None:
+            Initializes the Accumulator object.
+        accumulate(self, snowflake: Snowflake) -> bool:
+            Accumulates a snowflake that has fallen to the bottom of the matrix.
+        _blend_colors(color1: tuple[int, int, int], color2: tuple[int, int, int], weight:float=0.2) -> tuple[int, int, int]:
+            Blends two colors together.
+        _new_bin(self, x:int, snowflake:Snowflake) -> None:
+            Adds a new bin to the accumulation.
+        _add_to_bin(self, accumulation_bin:Bin, snowflake: Snowflake) -> None:
+            Adds a snowflake to the given bin.
+        _closest_fillable_bin_idx(self, x: int) -> int:
+            Finds the closest fillable bin to the given x-coordinate.
+        accumulation(self) -> np.ndarray:
+            Gets the accumulation matrix.
+    """
+
+    @dataclass
+    class Bin:
+        """
+        Represents a bin that accumulates fallen snowflakes.
+
+        Attributes:
+            idx (int): The index of the bin.
+            width (int): The width of the bin.
+            full_level (int): The full level of the bin.
+            color (tuple[int, int, int]): The color of the bin.
+            _level (int): The current level of the bin.
+        """
+        idx: int
+        width: int
+        full_level: int
+        color: tuple[int, int, int]
+        _level: int = 0
+
+        def full(self) -> bool:
+            """
+            Checks if the bin is full.
+
+            Returns:
+                bool: True if the bin is full, False otherwise.
+            """
+            return self.level >= self.full_level
+
+        @property
+        def current_color(self) -> tuple[int, int, int]:
+            """
+            Gets the current color of the bin.
+
+            Returns:
+                tuple[int, int, int]: The current color of the bin.
+            """
+            scaler = self.level / self.full_level
+            r = int(round(self.color[0] * scaler))
+            g = int(round(self.color[1] * scaler))
+            b = int(round(self.color[2] * scaler))
+            return (r, g, b)
+        
+        @property
+        def level(self) -> int:
+            """
+            Gets the current level of the bin.
+
+            Returns:
+                int: The current level of the bin.
+            """
+            return self._level
+        
+        @level.setter
+        def level(self, value: int):
+            """
+            Sets the current level of the bin.
+
+            Args:
+                value (int): The value to set as the current level of the bin.
+            """
+            self._level = max(0, min(value, self.full_level))
+
+    def __init__(self, height:int = Framer.HEIGHT, width:int = Framer.WIDTH, bin_level_scaler:int = 50) -> None:
+        self.matrix = np.zeros((height, width, 3), dtype=np.uint8)
+        # Bins is a list of Bin objects. The element at index i points to the bin that occupies that space. For a bin
+        # of width 3, the elements at indices i, i+1, and i+2 will all point to the same bin object.
+        self.bins:list[Accumulator.Bin | None] = [None] * width
+        self.layers = 1 # Current number of layers
+        self.bin_level_scaler = bin_level_scaler
+
+    def accumulate(self, snowflake: Snowflake) -> bool:
+        """
+        Accumulates a snowflake that has fallen to the bottom of the matrix.
+
+        Args:
+            snowflake (Snowflake): The snowflake to accumulate.
+
+        Returns:
+            bool: True if the snowflake was accumulated, False otherwise.
+        """
+        snowflake_x = round(snowflake.x)
+        # Check if the snowflake is in the accumulation area
+        if snowflake_x < 0 or snowflake_x >= self.matrix.shape[1]:
+            return False
+        
+        # Check if the snowflake landed on an existing bin
+        accumulation_bin:Accumulator.Bin | None = self.bins[snowflake_x]
+        if accumulation_bin: # Bin exists
+            if not accumulation_bin.full(): # Bin is not full
+                self._add_to_bin(accumulation_bin, snowflake)
+            else: # Bin is full
+                # Check for the closest non-full bin
+                closest_bin_idx = self._closest_fillable_bin_idx(snowflake_x)
+                closest_bin = self.bins[closest_bin_idx]
+                if closest_bin: # Closest bin exists
+                    self._add_to_bin(closest_bin, snowflake)
+                else: # Closest bin does not exist
+                    self._new_bin(closest_bin_idx, snowflake)
+        else: # Bin does not exist
+            self._new_bin(snowflake_x, snowflake)
+
+        if all([(b.full() if b else False) for b in self.bins]):
+            self.layers += 1
+            self.bins = [None] * self.matrix.shape[1]
+            if self.layers == self.matrix.shape[0]:
+                self.matrix.fill(0)
+                self.layers = 1
+
+        return True
+
+    @staticmethod
+    def _blend_colors(color1: tuple[int, int, int], 
+                      color2: tuple[int, int, int], 
+                      weight:float=0.2
+                      ) -> tuple[int, int, int]:
+        """
+        Blends two colors together.
+
+        Args:
+            color1 (tuple[int, int, int]): The first color to blend.
+            color2 (tuple[int, int, int]): The second color to blend.
+            weight (float, optional): The weight of the first color. Defaults to 0.2.
+
+        Returns:
+            tuple[int, int, int]: The blended color.
+        """
+        return (int(round(color1[0]*weight + color2[0]*(1-weight))), 
+                int(round(color1[1]*weight + color2[1]*(1-weight))),
+                int(round(color1[2]*weight + color2[2]*(1-weight)))
+                )
+
+    def _new_bin(self, x:int, snowflake:Snowflake) -> None:
+        """
+        Adds a new bin to the accumulation. If the bin cannot be inserted at the given x-coordinate, then the bin is
+        shifted to the left until it fits. If there are not enough empty spaces within the range of the given x 
+        coordinate, then the bin is compressed.
+
+        Args:
+            x (int): The x-coordinate of the bin to add. The value of self.bins[x] must be None.
+            snowflake (Snowflake): The snowflake to add to the bin.
+        """
+        assert self.bins[x] == None
+
+        desired_width = snowflake.size
+        left_idx = x
+        right_idx = x
+        # Search for empty space to the right of x
+        for _ in range(min(desired_width-1, len(self.bins)-x)-1):
+            if self.bins[right_idx+1] == None:
+                right_idx += 1
+            else:
+                break
+
+        # If there is not enough space to the right of x, then search to the left of x
+        actual_width = right_idx - left_idx + 1
+        for _ in range(min(desired_width-actual_width-1, x)):
+            if self.bins[left_idx-1] == None:
+                left_idx -= 1
+            else:
+                break
+        # If there is still not enough space, then compress the bins
+        actual_width = right_idx - left_idx + 1
+
+        bin_full_level = snowflake.size * self.bin_level_scaler
+        accumulation_bin = Accumulator.Bin(left_idx, actual_width, bin_full_level, snowflake.color)
+        self.bins[left_idx:right_idx+1] = [accumulation_bin] * actual_width
+        self._add_to_bin(accumulation_bin, snowflake)
+
+    def _add_to_bin(self, accumulation_bin:Bin, snowflake: Snowflake) -> None:
+        """
+        Adds a snowflake to the given bin.
+
+        Args:
+            accumulation_bin (Accumulator.Bin): The bin to add the snowflake to.
+            snowflake (Snowflake): The snowflake to add to the bin.
+        """
+        accumulation_bin.level += snowflake.size
+        accumulation_bin.color = self._blend_colors(snowflake.color, accumulation_bin.color, 0.2)
+
+        col_start_idx = accumulation_bin.idx
+        col_end_idx = accumulation_bin.idx + accumulation_bin.width
+        self.matrix[-self.layers, col_start_idx:col_end_idx] = accumulation_bin.current_color
+
+    def _closest_fillable_bin_idx(self, x: int) -> int:
+        """
+        Finds the closest fillable (i.e., non-full) bin to the given x-coordinate and returns the index of that bin.
+
+        Args:
+            x (int): The x-coordinate to search around.
+
+        Returns:
+            int: The index of the closest fillable bin.
+        
+        Raises:
+            RuntimeError: If no fillable bin is found.
+        """
+        left_idx = x - 1
+        right_idx = x + 1
+
+        while True:
+            # Look for the closest non-full bin, which can be either None or not full
+            if left_idx >= 0 and (self.bins[left_idx] == None or not self.bins[left_idx].full()):
+                return left_idx
+            elif right_idx < len(self.bins) and (self.bins[right_idx] == None or not self.bins[right_idx].full()):
+                return right_idx
+            elif left_idx < 0 and right_idx >= len(self.bins):
+                break
+            left_idx -= 1
+            right_idx += 1
+
+        for bin in self.bins:
+            print(bin)
+        raise RuntimeError("No fillable bin found")
+
+    @property
+    def accumulation(self) -> np.ndarray:
+        """
+        Gets the accumulation matrix.
+
+        Returns:
+            np.ndarray: The accumulation matrix.
+        """
+        return self.matrix[-self.layers:]
+
+    
 class AnimSnowflake(Framer):
     DEFAULT_FRAMERATE = 60
     MAX_WIND_INTENSITY = 10
@@ -77,7 +336,7 @@ class AnimSnowflake(Framer):
                  trail_factor:float = 0.0, 
                  fall_speed:float = 1.0, 
                  wind_speed:float = 0.0, 
-                 wind_step:float = 0.0001,
+                 wind_step:float = 0.00005,
                  wind_start_pos:float = 0.0,
                  wind_intensity:float = 3.0, 
                  wind_seed:int | None = None,
@@ -95,6 +354,7 @@ class AnimSnowflake(Framer):
         """
         super().__init__(AnimSnowflake.DEFAULT_FRAMERATE)
         self.matrix = np.zeros((self.HEIGHT, self.WIDTH, 3), dtype=np.uint8)
+        self.accumulator = Accumulator(self.HEIGHT, self.WIDTH)
         self.snowflakes:list[Snowflake] = []
 
         self.snowflake_sizes = snowflake_sizes
@@ -130,6 +390,8 @@ class AnimSnowflake(Framer):
          # TODO: Remove after debugging
         self.max_draw_time = [0, 0, 0]
         self.avg_draw_time = 0
+        self.max_accumulate_time = 0
+        self.avg_accumulate_time = 0
 
     def update(self):
         """
@@ -138,8 +400,11 @@ class AnimSnowflake(Framer):
         """
         self.matrix = (self.matrix * self.trail_factor).astype(np.uint8)
 
+        start_time = time.time()
         for pos in self._get_new_snowflake_positions():
             self.add_snowflake(pos[0], pos[1])
+        end_time = time.time()
+        add_time = end_time - start_time
 
         start_time = time.time()
         if self.storm_factor:
@@ -151,35 +416,54 @@ class AnimSnowflake(Framer):
 
         simplex_wind_speed = opensimplex.noise2(self.wind_pos, self._simplex_wind_speed_idx)
         self.wind_speed = self.storm_intensity * self.wind_intensity * simplex_wind_speed
-        # self.wind_speed += opensimplex.noise2(self.wind_pos*200, 100) * 0.5 * self.wind_speed
         self.wind_pos += self.wind_step
+        noise_time = time.time() - start_time
+        
+        accumulate_total_time = 0
+        start_time = time.time()
+        # Remove snowflakes that have fallen off the bottom of the matrix
+        snowflakes_trimmed = []
         for snowflake in self.snowflakes:
-            # NOTE: Since snowflakes are sorted by size, the larger ones should be drawn on top of the smaller ones
             snowflake.y += snowflake.speed_y
             snowflake.x += self.wind_speed*snowflake.speed_x
-            x = snowflake.x if self.interpolate else round(snowflake.x)
-            y = snowflake.y if self.interpolate else round(snowflake.y)
-            place_in(self.matrix, snowflake.matrix, y, x, transparent_threshold=5)
+            if self.in_frame(snowflake):
+                snowflakes_trimmed.append(snowflake)
+                x = snowflake.x if self.interpolate else round(snowflake.x)
+                y = snowflake.y if self.interpolate else round(snowflake.y)
+                # NOTE: Since snowflakes are sorted by size, the larger ones should be drawn on top of the smaller ones
+                place_in(self.matrix, snowflake.matrix, y, x, transparent_threshold=5)
+            elif snowflake.y >= self.HEIGHT - self.accumulator.layers:
+                accumulate_start_time = time.time()
+                # Accumulate snowflakes that have fallen off the bottom of the matrix
+                self.accumulator.accumulate(snowflake)
+                accumulate_total_time += time.time() - accumulate_start_time
 
+        self.snowflakes = snowflakes_trimmed
+        self.matrix[-self.accumulator.layers:] = self.accumulator.accumulation
         end_time = time.time()
+
         if self.snowflakes:
             time_per_snowflake = (end_time - start_time) / len(self.snowflakes) * 1000
             time_all_snowflakes = (end_time - start_time) * 1000
             # Track the top 3 max draw times
             self.max_draw_time[0] = round(time_all_snowflakes, 2) if time_all_snowflakes > self.max_draw_time[0] else round(self.max_draw_time[0], 2)
             self.max_draw_time.sort()
+            self.max_accumulate_time = max(self.max_accumulate_time, accumulate_total_time)
             alpha = 0.995
+            self.avg_accumulate_time = self.avg_accumulate_time * alpha + accumulate_total_time * (1-alpha)
             self.avg_draw_time = self.avg_draw_time * alpha + time_all_snowflakes * (1-alpha)
-            print(f"Draw time: {time_per_snowflake:.2f} ms")
-            print(f"Total draw time: {time_all_snowflakes:.2f} ms")
-            print(f"Avg draw time: {self.avg_draw_time:.2f} ms")
+            print(f"Add time: {add_time:.3f} ms")
+            # print(f"Noise time: {noise_time:.3f} ms")
+            print(f"Accumulate time: {self.avg_accumulate_time*1e3:.3f} ms")
+            print(f"Max accumulate time: {self.max_accumulate_time*1e3:.3f} ms")
+            print(f"Draw time: {time_per_snowflake:.3f} ms")
+            print(f"Total draw time: {time_all_snowflakes:.3f} ms")
+            print(f"Avg draw time: {self.avg_draw_time:.3f} ms")
             print(f"Max draw time: {self.max_draw_time} ms")
+            print(len(self.snowflakes))
+            # print(f"Wind speed: {self.wind_speed:.2f}")
+            # print(f"Storm intensity: {self.storm_intensity:.2f}")
         
-        print(len(self.snowflakes))
-        print(f"Wind speed: {self.wind_speed:.2f}")
-        print(f"Storm intensity: {self.storm_intensity:.2f}")
-        # Remove snowflakes that have fallen off the bottom of the matrix
-        self.snowflakes = [snowflake for snowflake in self.snowflakes if self.in_frame(snowflake)]
         return self.matrix
     
     def in_frame(self, snowflake: Snowflake) -> bool:
@@ -197,7 +481,7 @@ class AnimSnowflake(Framer):
         size = snowflake.size
         x = snowflake.x
         y = snowflake.y
-        return y + size > 0 and y < self.HEIGHT and x + size > 0 and x < self.WIDTH
+        return y + size > 0 and y < self.HEIGHT-self.accumulator.layers and x + size > 0 and x < self.WIDTH
     
     def add_snowflake(self, x:float, y:float):
         depth_idx = random.randint(0, len(self.snowflake_sizes)-1)
@@ -285,7 +569,8 @@ class AnimSnowflake(Framer):
         horizontal_samples = np.where(horizontal_chances < prob_horizontal)[0]
         positions = [[x, 0] for x in horizontal_samples]
 
-        vertical_chances = np.random.rand(self.HEIGHT-1) # -1 because the top edge is already covered by horizontal
+         # -1 because the top edge is already covered by horizontal
+        vertical_chances = np.random.rand(self.HEIGHT-self.accumulator.layers-1)
         vertical_samples = np.where(vertical_chances < prob_edge)[0]
         # If wind is negative, then the snowflakes will spawn only on the right edge of the matrix. 
         if self.wind_speed < 0:

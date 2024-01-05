@@ -8,8 +8,14 @@ SIMULATE = True
 BRIGHTNESS = 0.8
 TRAIL_FACTOR = 0
 SPEED = 1.0
+INTERPOLATE = False
+STORM_FACTOR = 2
 
-snow = AnimSnowflake(fall_speed=SPEED, trail_factor=TRAIL_FACTOR, wind_start_pos=10)
+snow = AnimSnowflake(fall_speed=SPEED, 
+                     storm_factor=STORM_FACTOR, 
+                     interpolate=INTERPOLATE, 
+                     trail_factor=TRAIL_FACTOR, 
+                     wind_start_pos=10)
 
 if SIMULATE:
     # Simulated door
