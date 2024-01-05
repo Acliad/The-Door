@@ -1,5 +1,5 @@
-from frames import AnimSnowflake
-from frames.frameplayer import FramePlayer
+from framing import AnimSnowflake
+from framing.frameplayer import FramePlayer
 from ledmat import LEDMatrix
 from ledmat.ledsim import sim_frame
 

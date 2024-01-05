@@ -9,6 +9,7 @@ class Framer(ABC):
 
     Attributes:
         framerate (int): The frame rate of the frame player.
+        dt (float): The time between frames.
 
     Methods:
         update(): Updates the frame.

@@ -3,7 +3,7 @@ import pygame
 from ledmat import LEDMatrix
 import numpy as np
 from time import sleep, time
-from frames import StaticFramer, GifFramer, FramePlayer, AnimRainbow, AnimSnowflake, Framer
+from framing import StaticFramer, GifFramer, FramePlayer, AnimRainbow, AnimSnowflake, Framer
 
 
 class LEDSimulator(LEDMatrix):

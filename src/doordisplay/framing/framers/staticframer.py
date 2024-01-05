@@ -1,8 +1,8 @@
-from frames.framers.framer import Framer
+from framing.framers.framer import Framer
 from PIL import Image
 import numpy as np
 from pathlib import Path
-from frames.utils import scale_fit, clip
+from framing.utils import scale_fit, clip
 
 class StaticFramer(Framer):
     def __init__(self, image_path:str | Path, auto_scale:bool = True):

@@ -1,5 +1,5 @@
-from frames.frameplayer import FramePlayer
-from frames.framers.gifframer import GifFramer
+from framing.frameplayer import FramePlayer
+from framing.framers.gifframer import GifFramer
 from ledmat import LEDMatrix
 from ledmat.ledsim import sim_frame
 

@@ -8,6 +8,25 @@ class TeensyNotFoundException(Exception):
     pass
 
 class LEDMatrix:
+    """Represents an LED matrix display.
+
+    Attributes:
+        WIDTH (int): The width of the LED matrix.
+        HEIGHT (int): The height of the LED matrix.
+        RGB_ORDER (list): The order of RGB channels in the LED matrix.
+        BLANK_PIXELS (list): Array of row, col indices of pixels that should be blanked out.
+        NUM_BANKS (int): The number of banks in the LED matrix.
+        COLUMNS_PER_BANK (int): The number of columns per bank in the LED matrix.
+        NUM_LEDS (int): The total number of LEDs in the LED matrix.
+        SOF_FLAG (bytes): The flag that must be sent to Teensy before the pixel data.
+        TEENSY_PID_VID (str): The PID and VID of the Teensy device.
+
+    Args:
+        serial_port (serial.Serial, optional): The serial port for communication with the Teensy. Defaults to None.
+        brightness (float, optional): The brightness scale of the LED matrix. Defaults to 0.25.
+        contrast (float, optional): The contrast adjustment factor. Defaults to 1.0.
+        gamma (float, optional): The gamma correction factor. Defaults to 2.4.
+    """
     WIDTH = 50
     HEIGHT = 124
     RGB_ORDER = [1, 0, 2]
@@ -29,6 +48,15 @@ class LEDMatrix:
     TEENSY_PID_VID = "16C0:0483"
 
     def __init__(self, serial_port: serial.Serial=None, brightness: float=0.25, contrast:float = 1.0, gamma: float=2.4):
+        """
+        Initialize the LEDMatrix object.
+
+        Args:
+            serial_port (serial.Serial, optional): The serial port to communicate with the Teensy. Defaults to None.
+            brightness (float, optional): The brightness level of the LED matrix. Defaults to 0.25.
+            contrast (float, optional): The contrast level of the LED matrix. Defaults to 1.0.
+            gamma (float, optional): The gamma correction value for the LED matrix. Defaults to 2.4.
+        """
         self.idx_map = LEDMatrix.generate_idx_map()
         self.serial_port = serial_port if serial_port is not None else LEDMatrix.get_teensy_serial()
         self._brightness = brightness
@@ -181,31 +209,31 @@ class LEDMatrix:
         """
         self._brightness = value
     
-@property
-def contrast(self) -> float:
-    return self._contrast
+    @property
+    def contrast(self) -> float:
+        return self._contrast
 
-@contrast.setter
-def contrast(self, value: float):
-    """
-    Set the contrast scale of the LED matrix.
+    @contrast.setter
+    def contrast(self, value: float):
+        """
+        Set the contrast scale of the LED matrix.
 
-    Args:
-        value (float): The contrast scale value to set.
-    """
-    self._contrast = value
+        Args:
+            value (float): The contrast scale value to set.
+        """
+        self._contrast = value
 
-@property
-def gamma(self) -> float:
-    return self._gamma
+    @property
+    def gamma(self) -> float:
+        return self._gamma
 
-@gamma.setter
-def gamma(self, value: float):
-    """
-    Set the gamma value of the LED matrix.
+    @gamma.setter
+    def gamma(self, value: float):
+        """
+        Set the gamma value of the LED matrix.
 
-    Args:
-        value (float): The gamma value to set.
-    """
-    self._gamma = value
-    self.gamma_lut = LEDMatrix.gen_gamma_lut(value)
+        Args:
+            value (float): The gamma value to set.
+        """
+        self._gamma = value
+        self.gamma_lut = LEDMatrix.gen_gamma_lut(value)

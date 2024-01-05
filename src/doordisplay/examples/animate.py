@@ -1,5 +1,5 @@
-from frames.framers.animations.animrainbow import AnimRainbow
-from frames.frameplayer import FramePlayer
+from framing.framers.animations.animrainbow import AnimRainbow
+from framing.frameplayer import FramePlayer
 from ledmat import LEDMatrix
 from ledmat.ledsim import sim_frame
 from time import sleep

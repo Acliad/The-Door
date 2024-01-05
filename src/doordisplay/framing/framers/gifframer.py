@@ -1,10 +1,10 @@
 
-from frames.framers.framer import Framer
+from framing.framers.framer import Framer
 import numpy as np
 from PIL import Image
 from enum import Enum
 from time import time
-from frames.utils import scale_fit, clip
+from framing.utils import scale_fit, clip
 
 class GifFramer(Framer):
     class LoopMode(Enum):

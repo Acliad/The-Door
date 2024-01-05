@@ -1,6 +1,6 @@
 import time
 from ledmat import LEDMatrix
-from frames.framers.framer import Framer
+from framing.framers.framer import Framer
 from serial import Serial
 import asyncio
 from enum import Enum

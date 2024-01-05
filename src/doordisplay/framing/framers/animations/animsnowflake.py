@@ -17,14 +17,14 @@ TODO:
     - Add random wind gusts
 """
 
-from frames.framers.framer import Framer
+from framing.framers.framer import Framer
 from PIL import Image
 import numpy as np
 import random
 import bisect
 import time
 import colorsys
-from frames.utils import place_in
+from framing.utils import place_in
 from typing import Callable, Sequence
 from dataclasses import dataclass
 import opensimplex # NOTE: Installing numba will increase performance of noise generation

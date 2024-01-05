@@ -1,5 +1,5 @@
-from frames.frameplayer import FramePlayer
-from frames.framers.staticframer import StaticFramer
+from framing.frameplayer import FramePlayer
+from framing.framers.staticframer import StaticFramer
 from ledmat import LEDMatrix
 from ledmat.ledsim import sim_frame
 from pathlib import Path

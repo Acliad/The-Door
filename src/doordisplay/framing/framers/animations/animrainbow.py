@@ -1,4 +1,4 @@
-from frames.framers.framer import Framer
+from framing.framers.framer import Framer
 import numpy as np
 from colorsys import hsv_to_rgb
 
