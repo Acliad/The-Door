@@ -6,15 +6,15 @@ from frames.utils import scale_fit, clip
 
 class StaticFramer(Framer):
     def __init__(self, image_path:str | Path, auto_scale:bool = True):
-        # Framerate is 0 for static frames
-        super().__init__(0)
+        super().__init__()
+        self.framerate = 0
         self.auto_scale = auto_scale
         self.image_path = image_path
-        self.current_frame = None
+        self.matrix = None
         self._load_image()
 
     def update(self):
-        return self.current_frame
+        return super().update()
     
     def reset(self):
         self._load_image()
@@ -39,4 +39,4 @@ class StaticFramer(Framer):
         frame_matrix = np.zeros((self.HEIGHT, self.WIDTH, 3), dtype=np.uint8)
         frame_matrix[start_row:start_row+image_array.shape[0], start_col:start_col+image_array.shape[1]] = image_array
 
-        self.current_frame = frame_matrix
+        self.matrix = frame_matrix

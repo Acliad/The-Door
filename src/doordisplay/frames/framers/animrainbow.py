@@ -15,13 +15,12 @@ class AnimRainbow(Framer):
         matrix (numpy.ndarray): The matrix of RGB values representing the rainbow animation.
     """
 
-    DEFAULT_FRAMERATE = 60
-
     def __init__(self):
         """
         Initializes a new instance of the AnimRainbow class.
         """
-        super().__init__(AnimRainbow.DEFAULT_FRAMERATE)
+        super().__init__()
+        self.framerate = Framer.DEFAULT_FRAMERATE
         self.speed = 1.0
         self.frequency = 1.0
         self.phase_deg = 0.0
@@ -55,13 +54,13 @@ class AnimRainbow(Framer):
         """
         rgb_array = self.get_rgb_array()
         # matrix = np.tile(rgb_array, (self.HEIGHT, 1, 1))
-        matrix = np.zeros((self.HEIGHT, self.WIDTH, 3), dtype=np.uint8)
+        self.matrix = np.zeros((self.HEIGHT, self.WIDTH, 3), dtype=np.uint8)
         for row in range(self.HEIGHT):
-            matrix[row] = np.roll(rgb_array, row, axis=0)
+            self.matrix[row] = np.roll(rgb_array, row, axis=0)
         
         self.phase_deg += self.speed
 
-        return matrix
+        return super().update()
 
     def reset(self):
         """

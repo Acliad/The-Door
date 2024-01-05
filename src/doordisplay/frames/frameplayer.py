@@ -12,7 +12,6 @@ class FramePlayer():
     Attributes:
         led_matrix (LEDMatrix): The LED matrix to play the frames on.
         framer (framer): The current framer to be played.
-        framerate (int): The framerate of the frame.
         frame_interval (float): The time interval between each frame.
         is_playing (bool): Indicates whether the frame player is currently playing.
 
@@ -44,17 +43,14 @@ class FramePlayer():
         """
         if framer:
             self.framer = framer
-            self.framerate = framer.framerate
-            # A framerate of 0 indicates a static frame
-            self.frame_interval = 1 / self.framerate if self.framerate else -1
+            self.frame_interval = framer.dt
         else:
             self.framer = None
-            self.framerate = 0
-            self.frame_interval = -1
+            self.frame_interval = 0
 
     def play(self):
         """
-        Start playing the frames. This function just updates the interal state, user must call update() periodically to
+        Start playing the frames. This function just updates the internal state, user must call update() periodically to
         actually play the frames.
 
         Raises:
@@ -121,49 +117,24 @@ class FramePlayer():
             raise ValueError("No framer set")
 
         # Do nothing if the player is stopped or paused
-        if FramePlayer.PlayerState.PLAYING:
-            # If the framerate is 0, it's a static frame so just display it and stop
-            if self.framerate == 0:
-                self.led_matrix.send_matrix(self.framer.update())
-                self.stop()
-            else:
-                current_time = time.time()
-                elapsed_time = current_time - self.last_update_time
-                if elapsed_time >= self.frame_interval:
-                    # NOTE: This assumes that each frame takes about the same amount of time to update and send.
-                    # Putting last_update_time before the actual update means that each interval is shortened by the
-                    # time it takes to update and send the frame, but then the frame continues to display until the
-                    # matrix is updated which should, in theory, mean each frame is displayed for frame_interval
-                    # time. Putting it after the update means that each interval is lengthened by the time it takes
-                    # to update and send the frame.
-                    self.last_update_time = current_time
-                    updated_frame = self.framer.update()
-                    if updated_frame is not None:
-                        self.led_matrix.send_matrix(updated_frame)
-                        return time.time() - self.last_update_time
-                    else:
-                        # A None value means the animation is done
-                        self.stop()
+        if self.playing_state == FramePlayer.PlayerState.PLAYING:
+            current_time = time.time()
+            elapsed_time = current_time - self.last_update_time
+            if elapsed_time >= self.frame_interval:
+                # NOTE: This assumes that each frame takes about the same amount of time to update and send.
+                # Putting last_update_time before the actual update means that each interval is shortened by the
+                # time it takes to update and send the frame, but then the frame continues to display until the
+                # matrix is updated which should, in theory, mean each frame is displayed for frame_interval
+                # time. Putting it after the update means that each interval is lengthened by the time it takes
+                # to update and send the frame.
+                self.last_update_time = current_time
+                updated_frame, self.frame_interval = self.framer.update()
+                if updated_frame is not None:
+                    self.led_matrix.send_matrix(updated_frame)
+                    return time.time() - self.last_update_time
+                elif updated_frame == None or self.frame_interval == 0:
+                    # A None value means the animation is done
+                    self.stop()
 
             # If we reached here, the frame player is stopped or paused
             return -1
-
-
-    @property
-    def framerate(self) -> float:
-        """
-        The framerate of the frame player.
-        """
-        return self._framerate
-    
-    @framerate.setter
-    def framerate(self, framerate: float):
-        """
-        Set the framerate of the frame player.
-
-        Args:
-            framerate (float): The desired framerate.
-
-        """
-        self._framerate = min(framerate, FramePlayer.MAX_FPS)
-        self.frame_interval = 1 / self.framerate if self.framerate else -1

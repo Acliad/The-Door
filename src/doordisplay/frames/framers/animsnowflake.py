@@ -398,7 +398,7 @@ class AnimSnowflake(Framer):
                 sequence of RGB values. Defaults to 'random'.
             speed_randomness (float, optional): The randomness factor for the snowflake speed. Defaults to 0.2.
         """
-        super().__init__(AnimSnowflake.DEFAULT_FRAMERATE)
+        super().__init__()
         self.matrix = np.zeros((self.HEIGHT, self.WIDTH, 3), dtype=np.uint8)
         self.accumulator = Accumulator(self.HEIGHT, self.WIDTH)
         self.snowflakes:list[Snowflake] = []
@@ -513,7 +513,7 @@ class AnimSnowflake(Framer):
             # print(f"Wind speed: {self.wind_speed:.2f}")
             # print(f"Storm intensity: {self.storm_intensity:.2f}")
         
-        return self.matrix
+        return super().update()
     
     def in_frame(self, snowflake: Snowflake) -> bool:
         """

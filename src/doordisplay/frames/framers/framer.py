@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from numpy import ndarray
+from typing import TypedDict
 from ledmat import LEDMatrix
 
 class Framer(ABC):
@@ -15,13 +16,14 @@ class Framer(ABC):
     """
     WIDTH = LEDMatrix.WIDTH
     HEIGHT = LEDMatrix.HEIGHT
+    DEFAULT_FRAMERATE = 60
 
-    def __init__(self, framerate):
-        self.framerate = framerate
-        self.current_frame = None
+    def __init__(self):
+        self.framerate = Framer.DEFAULT_FRAMERATE # NOTE: Also sets self.dt
+        self.matrix = None
 
     @abstractmethod
-    def update(self) -> ndarray | None:
+    def update(self) -> tuple[ndarray, float]:
         """
         Updates the frame.
 
@@ -29,9 +31,9 @@ class Framer(ABC):
         to call at the specified frame rate to correctly animate the frame.
 
         Returns:
-            ndarray: The updated frame.
+            tuple[ndarray, float]: The updated frame and the frame duration.
         """
-        pass
+        return (self.matrix, self.dt)
 
     @abstractmethod
     def reset(self):
@@ -60,8 +62,12 @@ class Framer(ABC):
         Args:
             framerate (int): The frame rate of the frame player.
         """
-        self._framerate = framerate
-        self._dt = 1 / framerate
+        if framerate:
+            self._framerate = framerate
+            self._dt = 1 / framerate
+        else:
+            self._framerate = 0
+            self._dt = 0
 
     @property
     def dt(self) -> float:
@@ -81,5 +87,9 @@ class Framer(ABC):
         Args:
             dt (float): The time between frames.
         """
-        self._dt = dt
-        self._framerate = 1 / dt
+        if dt:
+            self._dt = dt
+            self._framerate = 1 / dt
+        else:
+            self._dt = 0
+            self._framerate = 0

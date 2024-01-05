@@ -23,18 +23,15 @@ class GifFramer(Framer):
             auto_scale (bool, optional): Whether to automatically scale the frames to fit the desired dimensions. 
                                          Defaults to True.
         """
+        super().__init__()
         self.gif_path = gif_path
-        # TODO: Is there a better approach to this? Should the frameplayer control frame rate?
-        # GIFs have a variable frame rate, so we'll set the framerate to 120 so update() is called frequently then
-        # use time delta to determine when to update the frame.
-        super().__init__(100)
-        self.last_update_time = 0
+        self.framerate = framerate
         self.loop_mode = loop_mode
         self.play_forward = True
 
         gif = Image.open(self.gif_path)
         self.num_frames = gif.n_frames
-        self.current_frame = 0
+        self.frame_idx = 0
 
         # Check if the given path is a gif
         if gif.format != 'GIF':
@@ -61,34 +58,31 @@ class GifFramer(Framer):
         Updates the current frame of the GIF framer.
 
         Returns:
-            frame_matrix (list): The matrix representation of the current frame.
+            tuple[ndarray, dt]: The current frame and the time to display it in seconds.
         """
 
-        # Update the current state
-        if (time() - self.last_update_time) > self.frames[self.current_frame]['duration_s']:
-            self.last_update_time = time()
-            self.current_frame += 1 if self.play_forward else -1
-            # If we reach the end of the GIF, decide what to do based on the loop mode
-            if self.current_frame == self.num_frames or self.current_frame == -1:
-                match self.loop_mode:
-                    case self.LoopMode.LOOP:
-                        # Just loop back to the beginning
-                        self.current_frame = 0
-                    case self.LoopMode.BOUNCE:
-                        # Reverse the direction
-                        self.current_frame += -1 if self.play_forward else 1
-                        self.play_forward = not self.play_forward
-                    case self.LoopMode.ONCE:
-                        # Stop playing
-                        return None
+        # If we reach the end of the GIF, decide what to do based on the loop mode
+        if self.frame_idx == self.num_frames or self.frame_idx == -1:
+            match self.loop_mode:
+                case self.LoopMode.LOOP:
+                    # Just loop back to the beginning
+                    self.frame_idx = 0
+                case self.LoopMode.BOUNCE:
+                    # Reverse the direction
+                    self.frame_idx += -1 if self.play_forward else 1
+                    self.play_forward = not self.play_forward
+                case self.LoopMode.ONCE:
+                    # Stop playing
+                    return (None, 0)
 
-        frame_matrix = np.array(self.frames[self.current_frame]['frame'])
-        return frame_matrix
+        self.matrix = np.array(self.frames[self.frame_idx]['frame'])
+        self.dt = self.frames[self.frame_idx]['duration_s']
+        self.frame_idx += 1 if self.play_forward else -1
+        return super().update()
 
     def reset(self):
         """
         Resets the GIF framer to its initial state.
         """
-        self.current_frame = 0
-        self.last_update_time = time()
+        self.frame_idx = 0
         self.play_forward = True
