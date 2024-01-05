@@ -1,5 +1,5 @@
 from frames.utils import place_in
-from frames.framers.animsnowflake import Snowflake
+from frames.framers.animations.animsnowflake import Snowflake
 from matplotlib import pyplot as plt
 import numpy as np
 import random

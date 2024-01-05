@@ -1,4 +1,4 @@
-from frames.framers.animrainbow import AnimRainbow
+from frames.framers.animations.animrainbow import AnimRainbow
 from frames.frameplayer import FramePlayer
 from ledmat import LEDMatrix
 from ledmat.ledsim import sim_frame
