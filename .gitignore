@@ -3,7 +3,9 @@
 **/playground
 **/build
 
-
+# DrawIO files
+**/*.bkp
+**/*.dtmp
 
 ###################################################################
 # Below is a collection of ignores for python
