@@ -32,19 +32,20 @@ class BouncyBall():
 
 
 class AnimBouncyBall(Framer):
-    def __init__(self, num_balls: int = 8, trail_factor: float = 0.75):
+    def __init__(self, num_balls: int = 8, trail_factor: float = 0.75, interpolate: bool = True):
         super().__init__()
         # Create the matrix for the frame
         self.matrix = np.zeros((self.HEIGHT, self.WIDTH, 3), dtype=np.uint8)
         self.trail_factor = trail_factor
+        self.interpolate = interpolate
 
         self.balls: list[BouncyBall] = []
         for _ in range(num_balls):
             self.balls.append(BouncyBall(
                 x=np.random.randint(0, self.WIDTH),
                 y=np.random.randint(0, self.HEIGHT),
-                speed_x=np.random.randint(40, 100),
-                speed_y=np.random.randint(40, 100),
+                speed_x=np.random.randint(20, 80),
+                speed_y=np.random.randint(20, 80),
                 size=2*np.random.randint(2, 7) + 1, # Odd numbers only
                 color=np.random.randint(0, 255, 3)
             ))
@@ -71,8 +72,10 @@ class AnimBouncyBall(Framer):
             if ball.y >= self.HEIGHT - ball.size or ball.y <= 0:
                 ball.speed_y *= -1
 
+            ball_x = ball.x if self.interpolate else round(ball.x)
+            ball_y = ball.y if self.interpolate else round(ball.y)
             # Place the ball in the frame
-            place_in(self.matrix, ball.matrix, ball.y, ball.x, transparent_threshold=10)
+            place_in(self.matrix, ball.matrix, ball_y, ball_x, transparent_threshold=10)
         return super().update()
 
     def reset(self):
