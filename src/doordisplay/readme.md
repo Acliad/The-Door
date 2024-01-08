@@ -79,6 +79,7 @@ Let's make a simple animation as an example. This animation will be a simple ani
 First, we need to create the file *framing/framers/animations/animmybouncyball.py*. This file will contain the `AnimMyBouncyBall` class. Start by importing the `Framer` class and setting up the skeleton:
 ```python
 from framing.framers.framer import Framer
+import numpy as np
 
 class AnimMyBouncyBall(Framer):
     def __init__(self):
@@ -140,7 +141,8 @@ Once again, running the test script should give you a window with a ball in the 
 #### Step 4: Moving the ball
 Now that we have a ball, let's move it around the screen. We'll start by moving it to the right until it hits the edge, then move it back to the left. The *utils* modules provides some useful functions for manipulating frames. We'll use the `place_in()` function to move the ball around. Import the `place_in()` function from *framing/utils.py* by adding the following to the top of the file:
 ```python
-from utils import place_in 
+...
+from framing.utils import place_in 
 ```
 
 In your ```__init__()``` function, add ```self.ball_speed = 120.0``` and ```self.ball_pos = [0, 0]```:
