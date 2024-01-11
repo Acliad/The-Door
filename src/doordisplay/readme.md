@@ -62,7 +62,8 @@ So you want to contribute a framer? Great! Here are the basics you need to know:
 
 ### Testing a `Framer`
 The easiest way to test a `Framer` without having your own door is to use the `LEDSimulator`. This is easy to setup, you just create your framer, import sim_frame from ledmat.ledsim, and pass it your Frame:
-```from ledmat.ledsim import sim_frame
+```python
+from ledmat.ledsim import sim_frame
 from framing.framers.animations import MyAnimation
 
 framer = MyAnimation()
