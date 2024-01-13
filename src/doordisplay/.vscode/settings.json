@@ -3,7 +3,7 @@
         "lanczos",
         "ndarray"
     ],
-    "terminal.integrated.env.osx": {
+    "terminal.integrated.env.windows": {
         "PYTHONPATH": "${workspaceFolder}/"
     },
 }

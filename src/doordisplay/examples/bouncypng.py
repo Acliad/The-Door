@@ -4,7 +4,7 @@ from ledmat.ledsim import sim_frame
 from ledmat import LEDMatrix
 from pathlib import Path
 
-SIMULATE = False
+SIMULATE = True
 scale_image =  False
 BRIGHTNESS = 0.6
 

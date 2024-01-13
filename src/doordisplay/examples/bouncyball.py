@@ -3,10 +3,13 @@ from framing import FramePlayer
 from ledmat.ledsim import sim_frame
 from ledmat import LEDMatrix
 
-SIMULATE = False
+SIMULATE = True
 BRIGHTNESS = 0.6
 
-bouncyball = AnimBouncyBall(num_balls=6, trail_factor=0.95, interpolate=False)
+bouncyball = AnimBouncyBall(num_balls=6, 
+                            trail_factor=0.8, 
+                            interpolate=False, 
+                            collide=True)
 
 if SIMULATE:
     sim_frame(bouncyball)
