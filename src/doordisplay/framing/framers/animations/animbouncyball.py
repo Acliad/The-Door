@@ -32,12 +32,18 @@ class BouncyBall():
 
 
 class AnimBouncyBall(Framer):
-    def __init__(self, num_balls: int = 8, trail_factor: float = 0.75, interpolate: bool = True):
+    def __init__(self, num_balls: int = 8, 
+                 trail_factor: float = 0.75, 
+                 interpolate: bool = True,
+                 collide: bool = True
+                 ):
         super().__init__()
+        
         # Create the matrix for the frame
         self.matrix = np.zeros((self.HEIGHT, self.WIDTH, 3), dtype=np.uint8)
         self.trail_factor = trail_factor
         self.interpolate = interpolate
+        self.collide = collide
 
         self.balls: list[BouncyBall] = []
         for _ in range(num_balls):
@@ -50,14 +56,12 @@ class AnimBouncyBall(Framer):
                 color=np.random.randint(0, 255, 3)
             ))
 
-
-
     def update(self):
         # Apply the trail factor to the frame
         self.matrix = (self.matrix * self.trail_factor).astype(np.uint8)
 
 
-        for ball in self.balls:
+        for i, ball in enumerate(self.balls):
             # Move the ball
             ball.x += ball.speed_x * self.dt
             ball.y += ball.speed_y * self.dt
@@ -71,12 +75,29 @@ class AnimBouncyBall(Framer):
                 ball.speed_x *= -1
             if ball.y >= self.HEIGHT - ball.size or ball.y <= 0:
                 ball.speed_y *= -1
+            
+            # check if balls should collide or not
+            if self.collide:
+                    # Check for collisions with other balls
+                for j, other_ball in enumerate(self.balls):
+                    if i != j and self.check_collision(ball, other_ball):
+                        self.handle_collision(ball, other_ball)
 
             ball_x = ball.x if self.interpolate else round(ball.x)
             ball_y = ball.y if self.interpolate else round(ball.y)
+
             # Place the ball in the frame
             place_in(self.matrix, ball.matrix, ball_y, ball_x, transparent_threshold=10)
         return super().update()
+    
+    def check_collision(self, ball1, ball2):
+        distance = np.sqrt((ball1.x - ball2.x)**2 + (ball1.y - ball2.y)**2)
+        return distance <= (ball1.size + ball2.size) / 2
+
+    def handle_collision(self, ball1, ball2):
+        # Swap speeds to simulate bouncing off each other
+        ball1.speed_x, ball2.speed_x = ball2.speed_x, ball1.speed_x
+        ball1.speed_y, ball2.speed_y = ball2.speed_y, ball1.speed_y
 
     def reset(self):
         pass
