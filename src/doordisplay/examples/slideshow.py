@@ -33,4 +33,4 @@ else:
     player = FramePlayer(led_matrix, framer)
 
     # Play the frames
-    player.play()
+    player.play_blocking()
