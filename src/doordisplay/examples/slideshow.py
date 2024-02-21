@@ -1,5 +1,6 @@
 from framing.frameplayer import FramePlayer
 from framing.framers.slideshowframer import SlideshowFramer
+from framing.framers.slideshowframer import TransitionType
 from ledmat import LEDMatrix
 from ledmat.ledsim import sim_frame
 from pathlib import Path
@@ -10,7 +11,10 @@ SIMULATE = True
 CONTRAST = 1.0
 GAMMA = 2.2
 
-duration = 5  # Duration (in seconds) for each image
+display_duration = 2  # Duration (in seconds) for each image
+shuffle = True
+transition_type = TransitionType.RANDOM
+transition_duration = 1 # in seconds
 
 # List of image paths for the slideshow
 # Path to the data/Slideshow folder
@@ -22,7 +26,8 @@ img_paths = [slideshow_folder / f
                 if (slideshow_folder / f).is_file()]
 
 # Create the framer with the list of image paths
-framer = SlideshowFramer(img_paths, auto_scale=SCALE_IMAGE, duration=duration)
+framer = SlideshowFramer(img_paths, transition_type, auto_scale=SCALE_IMAGE, display_duration=display_duration, 
+                         shuffle=shuffle, transition_duration=transition_duration)
 
 
 if SIMULATE:
