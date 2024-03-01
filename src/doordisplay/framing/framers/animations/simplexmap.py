@@ -1,34 +1,43 @@
 from framing.framers.framer import Framer
 from typing import Sequence
+from dataclasses import dataclass
 import numpy as np
 import random
 import opensimplex # NOTE: Installing numba will increase performance of noise generation
 from time import time
 
 class SimplexMap(Framer):
-    _DEFAULT_COLOR_MAP = ((255, 0, 0), (245, 245, 66), (0, 0, 255)) # Red, Green, Blue
+    _DEFAULT_COLOR_MAP = ((255, 0, 0), (245, 245, 66), (0, 0, 255)) # Red, Yellow, Blue
+    
+    @dataclass
+    class Positions:
+        x:np.ndarray
+        y:np.ndarray
+        t:np.ndarray
 
-    def __init__(self, zoom_factor:float, speed:float, color_map:tuple[tuple]=_DEFAULT_COLOR_MAP) -> None:
+    def __init__(self, zoom_factor:float, temporal_speed:float, color_map:tuple[tuple]=_DEFAULT_COLOR_MAP) -> None:
         super().__init__()
         self._position_scaler = 1/zoom_factor
-        self.speed = speed
+        self.temporal_speed = temporal_speed
         self.color_map = color_map
 
-        # Reset will initialize self.matrix and self.position
-        self._positions = [None, None] # positions[0] is an ndarray of x-coords, positions[1] is an ndarray of y-coords
+        # Reset will initialize self.matrix and self._positions
         self.reset()
 
     def update(self) -> tuple[np.ndarray, float]:
         start_time = time()
         # Get the noise values
-        noise = opensimplex.noise2array(self._positions[0], self._positions[1])
+        noise = opensimplex.noise3array(self._positions.t, self._positions.x, self._positions.y)
         noise_time = time() - start_time
-        # Convert the noise values to colors
-        self.matrix = self._value_to_color(noise)
+        # Convert the noise values to colors. Need to squeeze the matrix because noise3array() will return a 
+        # HEIGHT x WIDTH x 1 ndarray, _value_to_color() expects an M x N array. sin values are shifted to a 0-1 range.
+        self.matrix = self._value_to_color(np.sin(noise.squeeze() * np.pi)*0.5 + 0.5)
+        
         # Update the positions
         # TODO: Add a random element? Maybe a filtered random walk?
-        self._positions[0] += self.speed * self.dt
-        self._positions[1] += self.speed * self.dt
+        # self._positions[0] += self.speed * self.dt
+        # self._positions[1] += self.speed * self.dt * 1.5
+        self._positions.t += self.temporal_speed * self.dt
         total_time = time() - start_time
 
         print(f"Time to generate noise (ms): {noise_time*1e3:.3f} ms")
@@ -38,8 +47,11 @@ class SimplexMap(Framer):
 
     def reset(self) -> None:
         self.matrix = np.zeros((self.HEIGHT, self.WIDTH, 3), dtype=np.uint8)
-        self._positions[0] = np.arange(0, self.WIDTH, 1) * self._position_scaler
-        self._positions[1] = np.arange(0, self.HEIGHT, 1) * self._position_scaler
+        self._positions:SimplexMap.Positions = SimplexMap.Positions(
+            x=np.arange(0, self.WIDTH, 1) * self._position_scaler,
+            y=np.arange(0, self.HEIGHT, 1) * self._position_scaler,
+            t=np.ones(1)
+        )
 
 
     def _value_to_color(self, value: np.ndarray) -> np.ndarray:
