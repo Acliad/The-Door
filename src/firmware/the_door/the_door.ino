@@ -16,6 +16,8 @@ const int ledsPerStrip = leds_per_column * columns_per_bank;
 const int numBanks = 13; 
 const int dummy_start_index = columns_per_bank*leds_per_column*3*(numBanks-1) - num_dummy_pixels*3;
 const int dummy_end_index = dummy_start_index + num_dummy_pixels*3;
+const int heartbeat_rate_ms = 1000; // How often to toggle the hearbeat LED
+bool heartbeat_led_state = LOW;
 
 // The physical number of LEDs on the door.
 const int real_num_leds = leds_per_column * num_columns - num_blank_pixels; 
@@ -30,15 +32,25 @@ const int config = WS2811_GRB | WS2811_800kHz;
 
 OctoWS2811 leds(ledsPerStrip, displayMemory, drawingMemory, config, numBanks, pinList);
 
+unsigned long last_led_update_time_ms = 0;
+
 void setup() {
   Serial.begin(115200);
   // TODO: Adjust the timeout to be on the order of ~2 frames. 
   Serial.setTimeout(30);
+  pinMode(LED_BUILTIN, OUTPUT);
   leds.begin();
   leds.show();
 }
 
 void loop() {
+  // Toggle the heartbeat LED
+  if (millis() - last_led_update_time_ms > heartbeat_rate_ms) {
+    last_led_update_time_ms = millis();
+    heartbeat_led_state = !heartbeat_led_state;
+    digitalWrite(LED_BUILTIN, heartbeat_led_state);
+  }
+
   // Wait for SOF_FLAG
   int start_char = Serial.read();
   if (start_char == SOF_FLAG) {
