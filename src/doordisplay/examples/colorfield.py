@@ -1,12 +1,22 @@
-from framing.framers.animations.plasma import Plasma
+import framing.framers.animations.colorfield as colorfield
 from framing.frameplayer import FramePlayer
 from ledmat import LEDMatrix
 from ledmat.ledsim import sim_frame
 from time import sleep
 
-ZOOM_FACTOR = 10
+# ---------- Simplex Field ----------
+# FIELD_MAP = colorfield.simplex_field
+# FIELD_MAP = colorfield.sin_value_map(colorfield.simplex_field)
+# FIELD_MAP = colorfield.sigmoid_value_map(colorfield.simplex_field, a=5)
+# FIELD_MAP = colorfield.tan_value_map(colorfield.simplex_field, 1)
+
+# ---------- Sin Field ----------
+# FIELD_MAP = colorfield.sin_field
+FIELD_MAP = colorfield.sigmoid_value_map(colorfield.sin_field, a=5)
+
+ZOOM_FACTOR = 3
 TEMPORAL_SPEED = 1
-SPATIAL_SPEED = 2
+SPATIAL_SPEED = 10
 SPATIAL_TYPE = "meander"
 MEANDER_SPEED = 0.1
 
@@ -19,7 +29,9 @@ SIMULATE = True
 colors = ((155, 216, 255), (115, 132, 255), (153, 84, 255), (176, 37, 204), (219, 0, 152), (215, 73, 165), 
           (255, 148, 194), (255, 219, 241)) # Berry
 
-plasma = Plasma(zoom_factor=ZOOM_FACTOR, temporal_speed=TEMPORAL_SPEED, spatial_speed=SPATIAL_SPEED, spatial_type=SPATIAL_TYPE, meander_speed=MEANDER_SPEED, color_map=colors)
+plasma = colorfield.ColorField(field_function=FIELD_MAP, zoom_factor=ZOOM_FACTOR, temporal_speed=TEMPORAL_SPEED,
+                               spatial_speed=SPATIAL_SPEED, spatial_type=SPATIAL_TYPE, meander_speed=MEANDER_SPEED, 
+                               color_map=colors)
 
 if SIMULATE:
     sim_frame(plasma)

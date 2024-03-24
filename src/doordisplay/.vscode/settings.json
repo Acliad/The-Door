@@ -1,7 +1,8 @@
 {
     "cSpell.words": [
         "lanczos",
-        "ndarray"
+        "ndarray",
+        "opensimplex"
     ],
     "terminal.integrated.env": {
         "osx": {
