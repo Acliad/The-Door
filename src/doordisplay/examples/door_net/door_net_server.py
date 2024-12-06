@@ -30,12 +30,14 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         super().__init__(*args, **kwargs)
 
     def do_GET(self):
+        print("Get Received")
         global server_data
         self.send_response(200)
         self.end_headers()
         self.wfile.write(server_data)
 
     def do_POST(self):
+        print("Post Received")
         global server_data
         try:
             content_length = int(self.headers.get("Content-Length"))
@@ -52,7 +54,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             )
             json_data = json.loads(decrypted_data.decode("utf-8"))
             assert json_data[0] == "Door"
-            server_data = json_data[1]
+            server_data = json_data[1].encode("utf-8")
             self.send_response(200)
             self.end_headers()
         except:
@@ -67,6 +69,7 @@ if __name__ == "__main__":
     server_address = ("", PORT)  # "" means all available interfaces, port 8000
     httpd = HTTPServer(server_address, SimpleHTTPRequestHandler)
     try:
+        print("Server Start")
         httpd.serve_forever()
     except KeyboardInterrupt:
         print("\nServer shutting down.")
