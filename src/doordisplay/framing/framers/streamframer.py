@@ -23,7 +23,7 @@ def derive_key(password: str, salt: bytes) -> bytes:
 
 
 class StreamFramerWorker():
-    def __init__(self, password:str, target_url:str, callback):
+    def __init__(self, target_url:str, password:str, callback):
         self.password = password
         self.target_url = target_url
         self.callback = callback
