@@ -84,3 +84,6 @@ class StreamFramer(Framer):
     def kill(self):
         self.worker.alive = False
         self.thread.join()
+
+    def reset(self):
+        pass
