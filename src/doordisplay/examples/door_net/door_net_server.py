@@ -1,6 +1,6 @@
 # This script is a basic headless HTTP data server.
 # When it starts, it will generate an RSA key to authenticate POST data.
-
+import traceback
 # Posts must be an encoded JSON list
 #  * element 0 must be the string "Door"
 #  * element 1 is the data to be hosted
@@ -10,8 +10,8 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import serialization, hashes
 import json
-
-PORT = 1337
+import base64
+PORT = 1336
 
 server_data = b"[]"
 
@@ -30,34 +30,42 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         super().__init__(*args, **kwargs)
 
     def do_GET(self):
-        print("Get Received")
         global server_data
         self.send_response(200)
         self.end_headers()
         self.wfile.write(server_data)
+        self.wfile.flush()
 
     def do_POST(self):
-        print("Post Received")
         global server_data
         try:
-            content_length = int(self.headers.get("Content-Length"))
-            encrypted_data = self.rfile.read(content_length)
-
-            # Decrypt the data using the server's private key
-            decrypted_data = private_key.decrypt(
-                encrypted_data,
+            data_len = int(self.headers.get("Content-Length"))
+            data = json.loads(self.rfile.read(data_len))
+            a = base64.b64decode(data["a"].encode("utf-8"))
+            b = base64.b64decode(data["b"].encode("utf-8"))
+            if a == private_key.decrypt(
+                b,
                 padding.OAEP(
                     mgf=padding.MGF1(algorithm=hashes.SHA256()),
                     algorithm=hashes.SHA256(),
                     label=None
-                )
-            )
-            json_data = json.loads(decrypted_data.decode("utf-8"))
-            assert json_data[0] == "Door"
-            server_data = json_data[1].encode("utf-8")
-            self.send_response(200)
-            self.end_headers()
+                )):
+                server_data = data["c"].encode("utf-8")
+                self.send_response(200)
+                self.end_headers()
+            else:
+                print(a)
+                print(private_key.decrypt(
+                b,
+                padding.OAEP(
+                    mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                    algorithm=hashes.SHA256(),
+                    label=None
+                )))
+                self.send_response(401)
+                self.end_headers()
         except:
+            print(traceback.format_exc())
             self.send_response(400)
             self.end_headers()
 
@@ -69,7 +77,6 @@ if __name__ == "__main__":
     server_address = ("", PORT)  # "" means all available interfaces, port 8000
     httpd = HTTPServer(server_address, SimpleHTTPRequestHandler)
     try:
-        print("Server Start")
         httpd.serve_forever()
     except KeyboardInterrupt:
         print("\nServer shutting down.")
