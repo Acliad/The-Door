@@ -75,6 +75,7 @@ class StreamFramer(Framer):
             tuple[ndarray, dt]: The current frame and the time to display it in seconds.
         """
         if time.time() > self.frame_time and self.frame_idx < len(self.frames):
+            print(self.frames[self.frame_idx])
             self.frame_idx += 1
             self.matrix = self.frames[self.frame_idx]["matrix"]
             self.frame_time = time.time()+self.frames[self.frame_idx]["duration_s"]
