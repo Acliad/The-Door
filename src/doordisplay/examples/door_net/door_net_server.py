@@ -11,6 +11,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import serialization, hashes
 import json
 import base64
+import time
 PORT = 1336
 
 server_data = b"[]"
@@ -43,7 +44,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             data = json.loads(self.rfile.read(data_len))
             a = base64.b64decode(data["a"].encode("utf-8"))
             b = base64.b64decode(data["b"].encode("utf-8"))
-            if a == private_key.decrypt(
+            if (time.time()-float(a) < 0.1) and a == private_key.decrypt(
                 b,
                 padding.OAEP(
                     mgf=padding.MGF1(algorithm=hashes.SHA256()),
